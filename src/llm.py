@@ -1,6 +1,6 @@
 # import libraries
 import os
-from openai import OpenAI
+import openai
 from dotenv import load_dotenv
 
 load_dotenv()  # Loads environment variables from .env
@@ -10,15 +10,19 @@ token = os.getenv("OPENAI_API_KEY") or os.getenv("GITHUB_TOKEN")
 if not token:
     raise ValueError("Either OPENAI_API_KEY or GITHUB_TOKEN environment variable must be set")
 
-endpoint = "https://models.github.ai/inference"
+# Configure OpenAI
+openai.api_key = token
+openai.api_base = "https://models.github.ai/inference"
 model = "gpt-4o-mini"
 
 # A function to call an LLM model and return the response
 def call_llm_model(model, messages, temperature=1.0, top_p=1.0):    
-    client = OpenAI(base_url=endpoint, api_key=token)
-    response = client.chat.completions.create(
+    response = openai.ChatCompletion.create(
         messages=messages,
-        temperature=temperature, top_p=top_p, model=model)
+        temperature=temperature, 
+        top_p=top_p, 
+        model=model
+    )
     return response.choices[0].message.content
 
 # A function to translate text using the LLM model

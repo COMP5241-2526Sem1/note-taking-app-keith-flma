@@ -22,8 +22,6 @@ app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(note_bp, url_prefix='/api')
 # Configure database - prefer DATABASE_URL (Supabase/Postgres), fallback to local SQLite
 DATABASE_URL = os.environ.get('DATABASE_URL')
-SUPABASE_URL = os.environ.get('SUPABASE_URL')
-SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY')
 
 # Global variables for hybrid approach
 supabase_client = None
@@ -36,15 +34,16 @@ if DATABASE_URL:
         print("✅ Using Supabase Postgres database")
         
         # Also initialize Supabase client as backup
-        if SUPABASE_URL and SUPABASE_ANON_KEY:
-            try:
-                from supabase import create_client
-                supabase_client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
-                print("✅ Supabase REST client initialized as backup")
-            except ImportError:
-                print("⚠️  Supabase client not available - install with: pip install supabase")
-            except Exception as e:
-                print(f"⚠️  Supabase client initialization failed: {e}")
+        # Temporarily disabled to resolve dependency issues
+        # if SUPABASE_URL and SUPABASE_ANON_KEY:
+        #     try:
+        #         from supabase import create_client
+        #         supabase_client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+        #         print("✅ Supabase REST client initialized as backup")
+        #     except ImportError:
+        #         print("⚠️  Supabase client not available - install with: pip install supabase")
+        #     except Exception as e:
+        #         print(f"⚠️  Supabase client initialization failed: {e}")
         
     except Exception as e:
         print(f"⚠️  Database configuration error: {e}")
