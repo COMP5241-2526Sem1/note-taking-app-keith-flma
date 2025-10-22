@@ -1,15 +1,19 @@
-import os
-import sys
+from flask import Flask, jsonify
+from flask_cors import CORS
 
-# Add the project root to Python path for imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+app = Flask(__name__)
+CORS(app)
 
-from src.main import app
+@app.route('/')
+def index():
+    return jsonify({
+        'message': 'Note Taking App API',
+        'status': 'running',
+        'endpoints': {
+            '/api/test': 'Test endpoint'
+        }
+    })
 
-# Vercel expects the Flask app to be directly exposed
-# The app variable is what Vercel will use as the WSGI application
-application = app
-
-# For local testing
-if __name__ == "__main__":
-    app.run(debug=True)
+@app.route('/api/test')
+def test():
+    return jsonify({'message': 'Hello from Flask!', 'status': 'working'})
