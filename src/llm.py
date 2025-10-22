@@ -4,9 +4,14 @@ from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()  # Loads environment variables from .env
-token = os.environ["GITHUB_TOKEN"]
+
+# Use OPENAI_API_KEY if available, fallback to GITHUB_TOKEN for GitHub Models
+token = os.getenv("OPENAI_API_KEY") or os.getenv("GITHUB_TOKEN")
+if not token:
+    raise ValueError("Either OPENAI_API_KEY or GITHUB_TOKEN environment variable must be set")
+
 endpoint = "https://models.github.ai/inference"
-model = "openai/gpt-4.1-mini"
+model = "gpt-4o-mini"
 
 # A function to call an LLM model and return the response
 def call_llm_model(model, messages, temperature=1.0, top_p=1.0):    
