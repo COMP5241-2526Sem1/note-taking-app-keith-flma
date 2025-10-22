@@ -9,7 +9,7 @@ from src.models.user import db
 from src.routes.user import user_bp
 from src.routes.note import note_bp
 from src.models.note import Note
-from src.llm import translate, extract_structured_notes, extract_structured_notes
+from src.llm import translate, extract_structured_notes
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
@@ -23,7 +23,7 @@ app.register_blueprint(note_bp, url_prefix='/api')
 # Configure database - prefer DATABASE_URL (Supabase/Postgres), fallback to local SQLite
 DATABASE_URL = os.environ.get('DATABASE_URL')
 SUPABASE_URL = os.environ.get('SUPABASE_URL')
-SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY')
+SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY')
 
 # Global variables for hybrid approach
 supabase_client = None
@@ -36,10 +36,10 @@ if DATABASE_URL:
         print("✅ Using Supabase Postgres database")
         
         # Also initialize Supabase client as backup
-        if SUPABASE_URL and SUPABASE_SERVICE_KEY:
+        if SUPABASE_URL and SUPABASE_ANON_KEY:
             try:
                 from supabase import create_client
-                supabase_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+                supabase_client = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
                 print("✅ Supabase REST client initialized as backup")
             except ImportError:
                 print("⚠️  Supabase client not available - install with: pip install supabase")
