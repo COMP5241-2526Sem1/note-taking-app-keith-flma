@@ -5,31 +5,38 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, jsonify
 from flask_cors import CORS
-from src.models.user import db
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
 
-# Database configuration - using SQLite for simplicity
-# In production, you might want to use environment variables for the database URL
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///notes.db')
+# Database configuration - using in-memory SQLite or environment variable
+# For serverless, we'll use /tmp directory which is writable in Vercel
+database_path = os.path.join('/tmp', 'notes.db') if os.environ.get('VERCEL') else 'sqlite:///notes.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', f'sqlite:///{database_path}')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Initialize database
-db.init_app(app)
 
 # Enable CORS for all routes
 CORS(app)
 
-# Register blueprints
-from src.routes.note import note_bp
-from src.routes.user import user_bp
-app.register_blueprint(note_bp, url_prefix='/api')
-app.register_blueprint(user_bp, url_prefix='/api')
+# Initialize database only after app is configured
+from src.models.user import db
+db.init_app(app)
 
-# Create database tables
-with app.app_context():
-    db.create_all()
+# Register blueprints
+try:
+    from src.routes.note import note_bp
+    from src.routes.user import user_bp
+    app.register_blueprint(note_bp, url_prefix='/api')
+    app.register_blueprint(user_bp, url_prefix='/api')
+except Exception as e:
+    print(f"Warning: Could not register blueprints: {e}")
+
+# Create database tables (with error handling for serverless)
+try:
+    with app.app_context():
+        db.create_all()
+except Exception as e:
+    print(f"Warning: Could not create database tables: {e}")
 
 # Root route
 @app.route('/')
