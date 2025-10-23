@@ -1061,9 +1061,15 @@
                     document.getElementById('generateInput').value = '';
                     
                     // Show success message with tags if available
-                    const tagsText = generatedNote.tags && generatedNote.tags.length > 0 
-                        ? ` (Tags: ${generatedNote.tags.join(', ')})` 
-                        : '';
+                    let tagsText = '';
+                    if (generatedNote.tags) {
+                        const tagsDisplay = Array.isArray(generatedNote.tags) 
+                            ? generatedNote.tags.join(', ') 
+                            : generatedNote.tags;
+                        if (tagsDisplay) {
+                            tagsText = ` (Tags: ${tagsDisplay})`;
+                        }
+                    }
                     this.showMessage(`Note generated successfully!${tagsText}`, 'success');
                     
                 } catch (error) {
