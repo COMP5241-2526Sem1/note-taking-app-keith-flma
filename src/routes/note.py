@@ -17,7 +17,13 @@ def create_note():
         if not data or 'title' not in data or 'content' not in data:
             return jsonify({'error': 'Title and content are required'}), 400
         
-        note = Note(title=data['title'], content=data['content'])
+        note = Note(
+            title=data['title'], 
+            content=data['content'],
+            tags=data.get('tags', ''),
+            event_date=data.get('event_date', ''),
+            event_time=data.get('event_time', '')
+        )
         db.session.add(note)
         db.session.commit()
         return jsonify(note.to_dict()), 201
@@ -43,6 +49,9 @@ def update_note(note_id):
         
         note.title = data.get('title', note.title)
         note.content = data.get('content', note.content)
+        note.tags = data.get('tags', note.tags)
+        note.event_date = data.get('event_date', note.event_date)
+        note.event_time = data.get('event_time', note.event_time)
         db.session.commit()
         return jsonify(note.to_dict())
     except Exception as e:
