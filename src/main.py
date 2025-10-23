@@ -13,14 +13,19 @@ def create_app():
     app = Flask(__name__, static_folder=static_folder, static_url_path='/static')
     app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
     
-    # Database configuration - using /tmp for Vercel serverless
-    # Note: SQLite in /tmp will be ephemeral on Vercel (resets on each cold start)
-    # For production, consider using a persistent database like PostgreSQL
-    if os.environ.get('VERCEL'):
+    # Database configuration
+    # Priority: DATABASE_URL env var (Supabase) > local SQLite
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        # Use Supabase PostgreSQL (production)
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    elif os.environ.get('VERCEL'):
+        # Fallback to ephemeral SQLite in /tmp for Vercel (if DATABASE_URL not set)
         database_path = os.path.join('/tmp', 'notes.db')
         app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{database_path}'
     else:
-        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///notes.db')
+        # Local development SQLite
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///notes.db'
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
