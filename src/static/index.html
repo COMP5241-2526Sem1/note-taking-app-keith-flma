@@ -890,9 +890,10 @@
 
                 const content = document.getElementById('noteContent').value.trim();
                 const title = document.getElementById('noteTitle').value.trim();
+                const tags = document.getElementById('noteTags').value.trim();
                 const targetLanguage = document.getElementById('languageSelector').value;
 
-                if (!content && !title) {
+                if (!content && !title && !tags) {
                     this.showMessage('No content to translate', 'error');
                     return;
                 }
@@ -940,9 +941,28 @@
                         translatedContent = contentResult.translated_text;
                     }
 
+                    // Translate tags if they exist
+                    let translatedTags = tags;
+                    if (tags) {
+                        const tagsResponse = await fetch('/api/translate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                text: tags,
+                                target_language: targetLanguage
+                            })
+                        });
+
+                        if (tagsResponse.ok) {
+                            const tagsResult = await tagsResponse.json();
+                            translatedTags = tagsResult.translated_text;
+                        }
+                    }
+
                     // Update the form fields with translated content
                     document.getElementById('noteTitle').value = translatedTitle;
                     document.getElementById('noteContent').value = translatedContent;
+                    document.getElementById('noteTags').value = translatedTags;
                     
                     this.showMessage(`Note translated to ${targetLanguage} successfully!`, 'success');
                     
