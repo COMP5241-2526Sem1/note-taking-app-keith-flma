@@ -3,12 +3,14 @@ import sys
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from src.models.user import db
 
 def create_app():
-    app = Flask(__name__)
+    # Set the static folder path
+    static_folder = os.path.join(os.path.dirname(__file__), 'static')
+    app = Flask(__name__, static_folder=static_folder, static_url_path='/static')
     app.config['SECRET_KEY'] = 'asdf#FGSgvasgf$5$WGT'
     
     # Database configuration - using /tmp for Vercel serverless
@@ -42,9 +44,19 @@ def create_app():
     with app.app_context():
         db.create_all()
     
-    # Root route
+    # Root route - serve the HTML file
     @app.route('/')
     def index():
+        return send_from_directory(static_folder, 'index.html')
+    
+    # Serve static files
+    @app.route('/favicon.ico')
+    def favicon():
+        return send_from_directory(static_folder, 'favicon.ico')
+    
+    # API info route
+    @app.route('/api')
+    def api_info():
         return jsonify({
             'message': 'Note Taking App API',
             'status': 'running',
