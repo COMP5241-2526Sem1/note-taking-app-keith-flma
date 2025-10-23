@@ -1,19 +1,11 @@
-from flask import Flask, jsonify
-from flask_cors import CORS
+import os
+import sys
 
-app = Flask(__name__)
-CORS(app)
+# Add the parent directory to the path to import from src
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-@app.route('/')
-def index():
-    return jsonify({
-        'message': 'Note Taking App API',
-        'status': 'running',
-        'endpoints': {
-            '/api/test': 'Test endpoint'
-        }
-    })
+# Import the Flask app from src/main.py
+from src.main import app
 
-@app.route('/api/test')
-def test():
-    return jsonify({'message': 'Hello from Flask!', 'status': 'working'})
+# Vercel looks for 'app' or 'application' as the WSGI callable
+# This is already defined in src/main.py, so we just need to import it
