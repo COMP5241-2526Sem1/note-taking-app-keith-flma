@@ -1,14 +1,23 @@
 from flask import Blueprint, jsonify, request
-from src.llm import translate, extract_structured_notes
 from src.models.note import Note, db
 import json
+import os
 
 llm_bp = Blueprint('llm', __name__)
+
+def check_api_availability():
+    """Check if any LLM API is available"""
+    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("GITHUB_TOKEN")
+    return api_key is not None
 
 @llm_bp.route('/translate', methods=['POST'])
 def translate_text():
     """Translate text to target language"""
+    if not check_api_availability():
+        return jsonify({'error': 'LLM API not configured. Translation feature disabled.'}), 503
+    
     try:
+        from src.llm import translate
         data = request.json
         if not data or 'text' not in data or 'target_language' not in data:
             return jsonify({'error': 'Text and target_language are required'}), 400
@@ -20,12 +29,16 @@ def translate_text():
         
         return jsonify({'translated_text': translated_text})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'Translation failed: {str(e)}'}), 500
 
 @llm_bp.route('/extract-structured-notes', methods=['POST'])
 def extract_notes():
     """Extract structured notes from text"""
+    if not check_api_availability():
+        return jsonify({'error': 'LLM API not configured. Extract feature disabled.'}), 503
+    
     try:
+        from src.llm import extract_structured_notes
         data = request.json
         if not data or 'text' not in data:
             return jsonify({'error': 'Text is required'}), 400
@@ -47,12 +60,16 @@ def extract_notes():
             }), 500
             
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'Extract failed: {str(e)}'}), 500
 
 @llm_bp.route('/generate-note', methods=['POST'])
 def generate_note():
     """Generate a note from user input text"""
+    if not check_api_availability():
+        return jsonify({'error': 'LLM API not configured. Generate feature disabled.'}), 503
+    
     try:
+        from src.llm import extract_structured_notes
         data = request.json
         if not data or 'input_text' not in data:
             return jsonify({'error': 'input_text is required'}), 400
@@ -85,4 +102,4 @@ def generate_note():
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'Generate failed: {str(e)}'}), 500
