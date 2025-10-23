@@ -18,20 +18,42 @@ def create_app():
     database_url = os.environ.get('DATABASE_URL')
     if database_url:
         # Use Supabase PostgreSQL (production)
+        # Fix for IPv6 issue: add options to force IPv4
+        if 'postgresql://' in database_url or 'postgres://' in database_url:
+            # Ensure sslmode is set for Supabase
+            if '?' not in database_url:
+                database_url = f"{database_url}?sslmode=require"
+            elif 'sslmode' not in database_url:
+                database_url = f"{database_url}&sslmode=require"
         app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+        # Add engine options for better connection handling
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'pool_pre_ping': True,
+            'pool_recycle': 300,
+            'pool_size': 5,
+            'max_overflow': 10,
+            'connect_args': {
+                'sslmode': 'require',
+                'connect_timeout': 10,
+            }
+        }
     elif os.environ.get('VERCEL'):
         # Fallback to ephemeral SQLite in /tmp for Vercel (if DATABASE_URL not set)
         database_path = os.path.join('/tmp', 'notes.db')
         app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{database_path}'
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'pool_pre_ping': True,
+            'pool_recycle': 300,
+        }
     else:
         # Local development SQLite
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///notes.db'
+        app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+            'pool_pre_ping': True,
+            'pool_recycle': 300,
+        }
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'pool_pre_ping': True,
-        'pool_recycle': 300,
-    }
     
     # Enable CORS for all routes
     CORS(app)
