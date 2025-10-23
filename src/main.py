@@ -84,6 +84,34 @@ def create_app():
     def test():
         return jsonify({'message': 'Hello from Flask!', 'status': 'working'})
     
+    # Database test route
+    @app.route('/api/db-test')
+    def db_test():
+        try:
+            # Try to query the database
+            from src.models.note import Note
+            count = Note.query.count()
+            db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', 'Not set')
+            # Hide password in response
+            if 'postgresql://' in db_uri:
+                db_type = 'PostgreSQL (Supabase)'
+                db_uri_safe = db_uri.split('@')[1] if '@' in db_uri else 'Connected'
+            else:
+                db_type = 'SQLite'
+                db_uri_safe = db_uri
+            
+            return jsonify({
+                'status': 'Database connected',
+                'database_type': db_type,
+                'database_location': db_uri_safe,
+                'notes_count': count
+            })
+        except Exception as e:
+            return jsonify({
+                'status': 'Database error',
+                'error': str(e)
+            }), 500
+    
     return app
 
 # Create app instance

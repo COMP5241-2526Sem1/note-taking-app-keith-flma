@@ -1,38 +1,49 @@
 # import libraries
 import os
-import openai
 from dotenv import load_dotenv
 
 load_dotenv()  # Loads environment variables from .env
 
-# Use OPENAI_API_KEY if available, fallback to GITHUB_TOKEN for GitHub Models
-token = os.getenv("OPENAI_API_KEY") or os.getenv("GITHUB_TOKEN")
+# Check for API key
+api_key = os.getenv("OPENAI_API_KEY") or os.getenv("GITHUB_TOKEN")
 
-# Configure OpenAI only if token is available
-if token:
-    openai.api_key = token
-    openai.api_base = "https://models.github.ai/inference"
-    
-model = "gpt-4o-mini"
+# Determine which model to use
+if os.getenv("GITHUB_TOKEN") and not os.getenv("OPENAI_API_KEY"):
+    # Using GitHub Models
+    default_model = "gpt-4o-mini"
+else:
+    # Using OpenAI API
+    default_model = "gpt-3.5-turbo"
 
 # A function to call an LLM model and return the response
 def call_llm_model(model, messages, temperature=1.0, top_p=1.0):
-    if not token:
+    if not api_key:
         raise ValueError("Either OPENAI_API_KEY or GITHUB_TOKEN environment variable must be set")
     
-    response = openai.ChatCompletion.create(
-        messages=messages,
-        temperature=temperature, 
-        top_p=top_p, 
-        model=model
-    )
-    return response.choices[0].message.content
+    try:
+        # Try using openai library (v0.28.0 style)
+        import openai
+        openai.api_key = api_key
+        
+        # If using GitHub token, use GitHub Models endpoint
+        if os.getenv("GITHUB_TOKEN") and not os.getenv("OPENAI_API_KEY"):
+            openai.api_base = "https://models.inference.ai.azure.com"
+        
+        response = openai.ChatCompletion.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            top_p=top_p
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        raise Exception(f"LLM API call failed: {str(e)}")
 
 # A function to translate text using the LLM model
 def translate(text, target_language):
     prompt = f"Translate the following text to {target_language}. Return ONLY the translated text, no explanations or additional text:\n\n{text}"
     messages = [{"role": "user", "content": prompt}]
-    return call_llm_model(model, messages)
+    return call_llm_model(default_model, messages)
 
 system_prompt = '''
 Extract the user's notes into the following structured fields:
@@ -94,7 +105,7 @@ def extract_structured_notes(text, lang="English"):
     current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     prompt = system_prompt.format(lang=lang, Current_DateTime=current_datetime) + f"\nInput: \"{text}\""
     messages = [{"role": "user", "content": prompt}]
-    response = call_llm_model(model, messages)
+    response = call_llm_model(default_model, messages)
     return response
 
 # Main function
