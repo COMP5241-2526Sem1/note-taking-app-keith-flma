@@ -37,8 +37,10 @@ def create_app():
     # Register blueprints
     from src.routes.note import note_bp
     from src.routes.user import user_bp
+    from src.routes.llm import llm_bp
     app.register_blueprint(note_bp, url_prefix='/api')
     app.register_blueprint(user_bp, url_prefix='/api')
+    app.register_blueprint(llm_bp, url_prefix='/api')
     
     # Create database tables within app context
     with app.app_context():
