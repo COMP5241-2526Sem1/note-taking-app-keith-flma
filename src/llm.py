@@ -7,16 +7,19 @@ load_dotenv()  # Loads environment variables from .env
 
 # Use OPENAI_API_KEY if available, fallback to GITHUB_TOKEN for GitHub Models
 token = os.getenv("OPENAI_API_KEY") or os.getenv("GITHUB_TOKEN")
-if not token:
-    raise ValueError("Either OPENAI_API_KEY or GITHUB_TOKEN environment variable must be set")
 
-# Configure OpenAI
-openai.api_key = token
-openai.api_base = "https://models.github.ai/inference"
+# Configure OpenAI only if token is available
+if token:
+    openai.api_key = token
+    openai.api_base = "https://models.github.ai/inference"
+    
 model = "gpt-4o-mini"
 
 # A function to call an LLM model and return the response
-def call_llm_model(model, messages, temperature=1.0, top_p=1.0):    
+def call_llm_model(model, messages, temperature=1.0, top_p=1.0):
+    if not token:
+        raise ValueError("Either OPENAI_API_KEY or GITHUB_TOKEN environment variable must be set")
+    
     response = openai.ChatCompletion.create(
         messages=messages,
         temperature=temperature, 
