@@ -52,9 +52,13 @@ def create_app():
     except Exception as e:
         print(f"Warning: LLM routes not available: {e}")
     
-    # Create database tables within app context
-    with app.app_context():
-        db.create_all()
+    # Create database tables within app context (with error handling)
+    try:
+        with app.app_context():
+            db.create_all()
+    except Exception as e:
+        print(f"Warning: Could not create database tables: {e}")
+        # Tables might already exist, which is fine
     
     # Root route - serve the HTML file
     @app.route('/')
