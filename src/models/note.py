@@ -1,16 +1,18 @@
 from datetime import datetime
+from typing import Optional
+from sqlalchemy.orm import Mapped, mapped_column
 from src.models.user import db
 
 class Note(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(200), nullable=False)
-    content = db.Column(db.Text, nullable=False)
-    tags = db.Column(db.String(500), nullable=True)
-    event_date = db.Column(db.String(50), nullable=True)
-    event_time = db.Column(db.String(20), nullable=True)
-    order_index = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(db.String(200), nullable=False)
+    content: Mapped[str] = mapped_column(db.Text, nullable=False)
+    tags: Mapped[Optional[str]] = mapped_column(db.String(500), nullable=True)
+    event_date: Mapped[Optional[str]] = mapped_column(db.String(50), nullable=True)
+    event_time: Mapped[Optional[str]] = mapped_column(db.String(20), nullable=True)
+    order_index: Mapped[int] = mapped_column(default=0)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, onupdate=datetime.utcnow)
     
     def __repr__(self):
         return f'<Note {self.title}>'

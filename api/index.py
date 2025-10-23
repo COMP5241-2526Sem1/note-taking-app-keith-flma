@@ -1,14 +1,8 @@
-from flask import Flask, jsonify
+import os
+import sys
 
-app = Flask(__name__)
+# Add the parent directory to the path to import from src
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-@app.route('/')
-def index():
-    return jsonify({
-        'message': 'Note Taking App API - Simple Test',
-        'status': 'running'
-    })
-
-@app.route('/api/test')
-def test():
-    return jsonify({'message': 'Hello from Flask!', 'status': 'working'})
+# Import the Flask app from src/main.py
+from src.main import app
