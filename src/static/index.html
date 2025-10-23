@@ -907,7 +907,7 @@
                     // Translate title if it exists
                     let translatedTitle = title;
                     if (title) {
-                        const titleResponse = await fetch('/api/translate', {
+                        const titleResponse = await fetch('/api/llm/translate', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -925,7 +925,7 @@
                     // Translate content if it exists
                     let translatedContent = content;
                     if (content) {
-                        const contentResponse = await fetch('/api/translate', {
+                        const contentResponse = await fetch('/api/llm/translate', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -975,7 +975,7 @@
                     // Combine title and content for analysis
                     const textToAnalyze = title + (title && content ? '. ' : '') + content;
                     
-                    const response = await fetch('/api/extract-structured-notes', {
+                    const response = await fetch('/api/llm/extract-structured-notes', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -1032,7 +1032,7 @@
                     generateBtn.disabled = true;
                     generateBtn.textContent = '🔄 Generating...';
                     
-                    const response = await fetch('/api/generate-note', {
+                    const response = await fetch('/api/llm/generate-note', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
