@@ -4,11 +4,18 @@ from dotenv import load_dotenv
 
 load_dotenv()  # Loads environment variables from .env
 
-# Check for API key
+# Check for API keys - prioritize Hugging Face
+hf_api_key = os.getenv("HF_API_KEY")
 api_key = os.getenv("OPENAI_API_KEY") or os.getenv("GITHUB_TOKEN")
 
+# Determine which LLM provider to use
+use_huggingface = bool(hf_api_key)
+
 # Determine which model to use
-if os.getenv("GITHUB_TOKEN") and not os.getenv("OPENAI_API_KEY"):
+if use_huggingface:
+    # Using Hugging Face
+    default_model = os.getenv("HF_MODEL", "google/flan-t5-large")
+elif os.getenv("GITHUB_TOKEN") and not os.getenv("OPENAI_API_KEY"):
     # Using GitHub Models
     default_model = "gpt-4o-mini"
 else:
@@ -17,8 +24,19 @@ else:
 
 # A function to call an LLM model and return the response
 def call_llm_model(model, messages, temperature=1.0, top_p=1.0):
+    # Use Hugging Face if available
+    if use_huggingface:
+        try:
+            from src.hf_helpers import hf_chat_completion
+            # Convert temperature (0-2 range) to HF range (0-1)
+            hf_temperature = min(temperature / 2.0, 1.0)
+            return hf_chat_completion(messages, temperature=hf_temperature, max_new_tokens=500)
+        except Exception as e:
+            raise Exception(f"Hugging Face API call failed: {str(e)}")
+    
+    # Fallback to OpenAI/GitHub Models
     if not api_key:
-        raise ValueError("Either OPENAI_API_KEY or GITHUB_TOKEN environment variable must be set")
+        raise ValueError("Either HF_API_KEY, OPENAI_API_KEY, or GITHUB_TOKEN environment variable must be set")
     
     try:
         # Try using openai library (v0.28.0 style)
@@ -41,6 +59,35 @@ def call_llm_model(model, messages, temperature=1.0, top_p=1.0):
 
 # A function to translate text using the LLM model
 def translate(text, target_language):
+    # Use Hugging Face translation if available
+    if use_huggingface:
+        try:
+            from src.hf_helpers import hf_translate, hf_generate
+            
+            # Map common language names to codes
+            lang_map = {
+                "spanish": "es", "french": "fr", "german": "de", "italian": "it",
+                "portuguese": "pt", "chinese": "zh", "japanese": "ja", "korean": "ko",
+                "russian": "ru", "arabic": "ar", "hindi": "hi", "english": "en"
+            }
+            target_code = lang_map.get(target_language.lower(), target_language.lower()[:2])
+            
+            # Try translation model first
+            translation_model = os.getenv("HF_TRANSLATION_MODEL", "")
+            if translation_model:
+                try:
+                    return hf_translate(text, source_lang="auto", target_lang=target_code)
+                except Exception as e:
+                    print(f"Translation model failed, falling back to generation: {e}")
+            
+            # Fallback: use generation model for translation
+            prompt = f"Translate the following text to {target_language}. Return ONLY the translated text, no explanations:\n\n{text}"
+            return hf_generate(prompt, max_new_tokens=300, temperature=0.3)
+            
+        except Exception as e:
+            raise Exception(f"Hugging Face translation failed: {str(e)}")
+    
+    # Fallback to OpenAI/GitHub Models
     prompt = f"Translate the following text to {target_language}. Return ONLY the translated text, no explanations or additional text:\n\n{text}"
     messages = [{"role": "user", "content": prompt}]
     return call_llm_model(default_model, messages)
